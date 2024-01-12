@@ -62,10 +62,11 @@ export default function Register() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    // console.log({
-    //   email: data.get("email"),
-    //   password: data.get("password"),
-    // });
+
+    if (data.get("password") !== data.get("repeat-password")) {
+      alert("Passwords do not match!");
+      return;
+    }
     fetch(`${backendurl}/api/1.0/user/signup`, {
       method: "POST",
       headers: {

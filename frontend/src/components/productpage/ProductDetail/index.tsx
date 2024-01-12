@@ -1,18 +1,103 @@
 import React, { useState, useEffect } from "react";
 
+import MessageBox from "../../common/MessageBox";
 import Product from "../../../types/Product";
 import useWindowWidth from "../../../hooks/useWindowWidth";
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import { useUser } from "../../../contexts/UserContext";
+import { backendurl } from "../../../constants/urls";
+import { IoChatbubbleEllipsesSharp } from "react-icons/io5";
+import { useParams } from 'react-router-dom';
+
 
 export default function ProductDetail({ product }: { product: Product }) {
+  const { user } = useUser();
+  const { productId } = useParams();
+
   const [amount, setAmount] = useState(0);
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedColorCode, setSelectedColorCode] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [sizeRemain, setSizeRemain] = useState<string[]>([]);
   const [amountRemain, setAmountRemain] = useState(-1);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [messageCurrentRoom, setMessageCurrentRoom] = useState(-1);
 
   const storage = window.localStorage;
   const windowWidth = useWindowWidth();
+
+
+
+  const toggleFavorite = () => {
+    const payload = {
+      user_id: user?.id, // 從用戶上下文獲取用戶 ID
+      product_id: productId, // 從產品 prop 獲取產品 ID
+    };
+    console.log('payload to favorite', payload);
+
+    // 確定使用哪個 API 端點
+    const url = isFavorited ? `${backendurl}/api/1.0/user/deleteFavorite` : `${backendurl}/api/1.0/user/favorite`;
+    
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+    .then((res) => res.json())
+    .then((res) => {
+      setIsFavorited(!isFavorited); // 根據回應更新狀態
+    })
+    .catch((error) => {
+      console.error('處理收藏時出錯:', error);
+    });
+  };
+
+  const checkFavoriteStatus = () => {
+    if (!user?.id || !productId) {
+      console.log("User ID or Product ID is undefined.");
+      return;
+    }
+    console.log('fetch api is ',`${backendurl}/api/1.0/user/getFavorite?user_id=${user?.id}&product_id=${productId }`)
+    fetch(`${backendurl}/api/1.0/user/getFavorite?user_id=${user?.id}&product_id=${productId }`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    })
+    .then((res) => {
+      if (!res.ok) {
+        if (res.status === 429) {
+          console.error('請求次數過多');
+        } else {
+          console.error(`HTTP 錯誤！狀態碼：${res.status}`);
+        }
+        return null;
+      }
+      return res.json();
+    })
+    .then((res) => {
+      if (res) {
+        setIsFavorited(res.favorited);
+      }
+    })
+    .catch((error) => {
+      console.error('獲取收藏狀態出錯:', error);
+    });
+  };
+
+  useEffect(() => {
+    if (productId && user?.id) {
+      checkFavoriteStatus();
+    }
+    console.log('id is',user?.id )
+    console.log('product  is',productId)
+  }, [user?.id, productId]);
+
+
 
   useEffect(() => {
     if (product.variants) {
@@ -106,12 +191,50 @@ export default function ProductDetail({ product }: { product: Product }) {
                     <img src={product.main_image} className="w-full" alt="" />
                   </div>
                   <div className="w-2/5 p-5 ">
-                    <div className="mb-2 text-xl font-bold">
-                      {product.title}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xl font-bold ">{product.title}</div>
+                      <button className="flex items-center px-2 py-1 border-2 border-gray-400 rounded-lg">
+                        <IoChatbubbleEllipsesSharp />
+
+                        <div
+                          className="ml-1"
+                          onClick={() => {
+                            const payload = {
+                              room: {
+                                room_name: product.title,
+                                image: product.main_image,
+                                product_id: product.id,
+                                type: "product",
+                                user_id: user?.id,
+                              },
+                            };
+                            console.log("payload", payload);
+
+                            fetch(`${backendurl}/api/1.0/message/room`, {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify(payload),
+                            })
+                              .then((res) => res.json())
+                              .then((res) => {
+                                console.log("res", res);
+                                setMessageOpen(!messageOpen);
+                                setMessageCurrentRoom(res.roomId);
+                              });
+                          }}
+                        >
+                          聯絡客服
+                        </div>
+                      </button>
                     </div>
                     <div className="text-sm text-gray-500">{product.id}</div>
                     <div className="my-3 text-xl font-bold">
                       TWD.{product.price}
+                      <button onClick={toggleFavorite} style={{ all: 'unset', cursor: 'pointer', marginLeft: '3em' }}>
+          {isFavorited ? <FaHeart color="red" /> : <FaRegHeart />}
+        </button>
                     </div>
                     <div className="my-3 border-t-2 border-gray-400"></div>
                     <div className="flex items-center my-3">
@@ -293,8 +416,10 @@ export default function ProductDetail({ product }: { product: Product }) {
                       {product.title}
                     </div>
                     <div className="text-sm text-gray-500">{product.id}</div>
+                    
                     <div className="my-3 text-xl font-bold">
                       TWD.{product.price}
+                    
                     </div>
                     <div className="my-3 border-t-2 border-gray-400"></div>
                     <div className="flex items-center my-3">
@@ -463,6 +588,10 @@ export default function ProductDetail({ product }: { product: Product }) {
           )}
         </>
       )}
+      <MessageBox
+        messageOpen={messageOpen}
+        messageCurrentRoom={messageCurrentRoom}
+      />
     </>
   );
 }

@@ -21,3 +21,23 @@
 .tpfield:focus {
   outline: none;
 }
+
+::-webkit-scrollbar {
+  width: 8px; /* 滾動條寬度 */
+}
+
+/* 更改滾動條軌道的背景色 */
+/* ::-webkit-scrollbar-track {
+  background: #2c2830;
+} */
+
+/* 更改滾動條的滾動滑塊 */
+::-webkit-scrollbar-thumb {
+  background: #acacac;
+  border-radius: 5px; /* 滑塊邊緣的圓角 */
+}
+
+/* 滾動滑塊在滾動時的外觀 */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

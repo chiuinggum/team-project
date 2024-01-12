@@ -35,25 +35,6 @@ function Copyright(props) {
   );
 }
 
-// const defaultTheme = createTheme(
-//   {
-//     palette: {
-//       mode: "light",
-//     },
-//   },
-//   {
-//     palette: {
-//       mode: "light",
-//       primary: {
-//         main: "#90caf9",
-//       },
-//       secondary: {
-//         main: "#f48fb1",
-//       },
-//     },
-//   }
-// );
-
 export default function SignIn() {
   const { user, login, logout } = useUser();
   const navigate = useNavigate();
@@ -75,12 +56,13 @@ export default function SignIn() {
     })
       .then((resp) => resp.json())
       .then((data) => {
-        console.log("data", data);
         login(data.data.user);
-        console.log("set", data.data.access_token);
         storage.setItem("token", data.data.access_token);
+<<<<<<< HEAD
         setCookie(null, 'user_id', data.data.user.id , {path: '/'});
         login(data.data.user);
+=======
+>>>>>>> 63ab43a2ef407bd6275f59dffb59dff645e9d481
         navigate("/");
       });
   };

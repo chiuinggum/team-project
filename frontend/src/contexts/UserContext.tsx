@@ -36,7 +36,15 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    console.log(window.localStorage.getItem('token')) ;
+    fetch('http://localhost:3000/api/1.0/user/logout', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
     setUser(null);
     const storage = window.localStorage;
     storage.removeItem("token");
